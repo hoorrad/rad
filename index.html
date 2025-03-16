@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة البزل</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            text-align: center;
+        }
+        .puzzle {
+            display: grid;
+            gap: 5px;
+            margin: 20px auto;
+            justify-content: center;
+            grid-template-columns: repeat(3, 100px); /* عدد الأعمدة بناءً على القطع */
+            grid-template-rows: repeat(3, 100px); /* عدد الصفوف بناءً على القطع */
+        }
+        .piece {
+            width: 100px;
+            height: 100px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            font-size: 24px;
+            text-align: center;
+            line-height: 100px;
+            cursor: grab;
+            background-size: 300px 300px; /* الحجم الذي يناسب تقسيم الصورة */
+            background-repeat: no-repeat;
+        }
+        .info {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            background-color: #e0f7fa;
+            display: block; /* تأكد من أنها تظهر دائمًا */
+        }
+        #nextBtn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #nextBtn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<h1>لعبة البزل</h1>
+<p>رتب الأجزاء لتظهر لك المعلومة!</p>
+
+<div class="puzzle" id="puzzleBoard">
+    <!-- القطع سيتم إضافتها عبر JavaScript -->
+</div>
+
+<div class="info" id="infoBox">
+    <h2>المعلومة:</h2>
+    <p id="infoText"></p>
+</div>
+
+<button id="nextBtn" style="display:none;" onclick="nextPuzzle()">التالي</button>
+
+<script>
+    // روابط الصور والمعلومات
+    const images = [
+        {
+            url: 'https://www.healthpages.org/wp-content/uploads/hand-x-ray.jpg',
+            info: 'نستخدم هذه الوضعية للكشف عن أي كسور أو أجسام غريبة في اليد',
+            pieces: 9 // 9 قطع
+        },
+        {
+            url: 'https://th.bing.com/th/id/OIP.iwo0yD7Hz3hJrT-mWMgg3gHaNL?rs=1&pid=ImgDetMain',
+            info: 'نستخدم التصوير بالأشعة السينية لتصوير القدمين للكشف عن أي كسور أو أمراض مثل التهاب المفاصل الروماتيدي',
+            pieces: 9 // 9 قطع
+        },
+        {
+            url: 'https://th.bing.com/th/id/R.c692fb34b83842990a26bdbaf3354058?rik=nzJMZss1C0lRWw&riu=http%3a%2f%2fwww.newhealthadvisor.com%2fimages%2f1HT00986%2fanterior+shoulder+dislocation+f+(2).jpg&ehk=QA%2bqJ7bcjuwsoQIO8CzBIloIPFWmQkAR%2bllwfy9V6rg%3d&risl=&pid=ImgRaw&r=0',
+            info: 'نستخدم التصوير السيني للكشف عن خلع في الكتف كما نرى بالصورة',
+            pieces: 9 // 9 قطع
+        },
+        {
+            url: 'https://pressbooks.pub/app/uploads/sites/3987/2017/10/Abdomen-quadrants-scaled.jpg',
+            info: 'تصوير للمعدة تظهر الغازات باللون الأسود',
+            pieces: 4 // 4 قطع
+        },
+        {
+            url: 'https://th.bing.com/th/id/R.60c2e04655f926eb819ab0de1594b583?rik=BkTLonqrjiMxPg&pid=ImgRaw&r=0',
+            info: 'نستخدم التصوير للأشعة السينية للكشف عن أمراض البطن والغازات',
+            pieces: 4 // 4 قطع
+        }
+    ];
+
+    let currentImageIndex = 0;
+
+    // اختيار صورة عشوائية عند تحميل الصفحة
+    function getRandomIndex(arr) {
+        return Math.floor(Math.random() * arr.length);
+    }
+
+    // إضافة القطع وتوزيعها عند تحميل الصفحة
+    function loadPuzzle(imageIndex) {
+        let selectedImage = images[imageIndex];
+        let puzzleBoard = document.getElementById('puzzleBoard');
+        puzzleBoard.innerHTML = ''; // تنظيف اللوحة القديمة
+
+        // تحديد حجم القطع بناءً على عدد القطع
+        let rows = Math.sqrt(selectedImage.pieces); // عدد الصفوف
+        let gridTemplateColumns = `repeat(${rows}, 100px)`; // تحديد الأعمدة
+        let gridTemplateRows = `repeat(${rows}, 100px)`; // تحديد الصفوف
+        puzzleBoard.style.gridTemplateColumns = gridTemplateColumns;
+        puzzleBoard.style.gridTemplateRows = gridTemplateRows;
+
+        // إضافة القطع
+        for (let i = 0; i < selectedImage.pieces; i++) {
+            let piece = document.createElement('div');
+            piece.classList.add('piece');
+            piece.setAttribute('draggable', 'true'); // السماح بسحب القطعة
+            piece.dataset.index = i;
+            piece.style.backgroundImage = `url('${selectedImage.url}')`;
+
+            // تحديد مكان القطعة داخل الصورة (تقسيم الصورة حسب القطع)
+            let col = i % rows;
+            let row = Math.floor(i / rows);
+            piece.style.backgroundPosition = `${-col * 100}px ${-row * 100}px`; // تحديد مكان القطعة
+
+            // الحدث الخاص بالسحب
+            piece.ondragstart = function(e) {
+                e.dataTransfer.setData('text', e.target.dataset.index);
+            };
+
+            // الحدث الخاص بالإفلات
+            piece.ondragover = function(e) {
+                e.preventDefault();
+            };
+            
+            piece.ondrop = function(e) {
+                e.preventDefault();
+                let draggedIndex = e.dataTransfer.getData('text');
+                let draggedPiece = document.querySelector(`.piece[data-index='${draggedIndex}']`);
+                let droppedPiece = e.target;
+
+                // تبادل الأماكن بين القطعتين
+                let tempBg = draggedPiece.style.backgroundPosition;
+                draggedPiece.style.backgroundPosition = droppedPiece.style.backgroundPosition;
+                droppedPiece.style.backgroundPosition = tempBg;
+            };
+
+            puzzleBoard.appendChild(piece);
+        }
+
+        // تغيير المعلومة المعروضة
+        document.getElementById('infoText').innerText = selectedImage.info;
+
+        // إظهار الزر التالي
+        document.getElementById('nextBtn').style.display = 'block';
+    }
+
+    // الانتقال إلى الصورة التالية
+    function nextPuzzle() {
+        currentImageIndex++;
+        if (currentImageIndex >= images.length) {
+            currentImageIndex = 0; // العودة إلى أول صورة
+        }
+        loadPuzzle(currentImageIndex);
+    }
+
+    // تحميل الصورة الأولى عند تحميل الصفحة
+    window.onload = function() {
+        loadPuzzle(currentImageIndex);
+    }
+</script>
+
+</body>
+</html>
